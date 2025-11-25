@@ -1,0 +1,13 @@
+{
+  "name": "relay_brain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "zcatalyst-sdk-node": "^1.0.0"
+  }
+}

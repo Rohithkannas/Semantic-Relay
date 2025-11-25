@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "relay_brain": "functions/relay_brain"
+  },
+  "client": {
+    "source": "client"
+  }
+}
