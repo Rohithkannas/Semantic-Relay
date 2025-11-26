@@ -1,0 +1,10 @@
+{
+	"name": "relay_core",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "Rohith",
+	"dependencies": {
+		"express": "^5.1.0",
+		"zcatalyst-sdk-node": "^3.1.0"
+	}
+}

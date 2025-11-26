@@ -1,64 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html>
+<head>
+    <meta charset="UTF-8">
     <title>Relay Control</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="rc-app">
-      <header class="rc-header">
-        <div class="rc-header-title">Relay Control</div>
-        <label class="rc-toggle">
-          <input type="checkbox" id="relay-toggle" />
-          <span class="rc-toggle-slider"></span>
-          <span class="rc-toggle-label">Relay Active</span>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #F7F9FC; margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .status-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .rule-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #2C3E50; padding: 15px; display: flex; gap: 10px; }
+        input, select { padding: 10px; border-radius: 5px; border: none; flex-grow: 1; }
+        button { background: #2C7BE5; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        h1 { color: #2C3E50; margin: 0; font-size: 18px; }
+        h4 { color: #2C3E50; margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Relay Control</h1>
+        <label class="switch">
+            <input type="checkbox" id="status-toggle">
+            <span class="slider round"></span>
         </label>
-      </header>
+    </div>
 
-      <main class="rc-main">
-        <section class="rc-status-card">
-          <h2 class="rc-section-title">Status</h2>
-          <p id="status-text" class="rc-status-text">Current Status: Monitoring</p>
-        </section>
+    <div class="status-card" id="status-text">
+        Loading status...
+    </div>
 
-        <section class="rc-rules">
-          <h2 class="rc-section-title">Routing Rules</h2>
-          <div id="rules-container" class="rc-rules-container"></div>
-        </section>
-      </main>
-
-      <footer class="rc-footer">
-        <div class="rc-form">
-          <div class="rc-form-field">
-            <label for="rule-keyword" class="rc-label">Keyword</label>
-            <input
-              type="text"
-              id="rule-keyword"
-              class="rc-input"
-              placeholder="Keyword (e.g., Billing)"
-            />
-          </div>
-
-          <div class="rc-form-field">
-            <label for="rule-delegate" class="rc-label">Select Delegate</label>
-            <select id="rule-delegate" class="rc-select">
-              <option value="">Select Delegate</option>
-              <option value="user_1">Alex Chen</option>
-              <option value="user_2">Jordan Patel</option>
-              <option value="user_3">Samira Khan</option>
-            </select>
-          </div>
-
-          <button id="add-rule-btn" class="rc-button">
-            <span class="rc-button-icon">+</span>
-            <span>Add Rule</span>
-          </button>
+    <h4>Routing Rules</h4>
+    <div id="rules-container">
         </div>
-      </footer>
+
+    <div class="footer">
+        <input type="text" id="keyword-input" placeholder="Keyword (e.g., Billing)">
+        
+        <select id="delegate-select">
+            <option value="Steve (DevOps)">Steve (DevOps)</option>
+            <option value="Jane (Sales)">Jane (Sales)</option>
+            <option value="Admin">Admin</option>
+        </select>
+        
+        <button id="add-rule-btn">+ Add Rule</button>
     </div>
 
     <script src="script.js"></script>
-  </body>
+</body>
 </html>

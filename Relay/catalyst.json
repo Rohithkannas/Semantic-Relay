@@ -1,6 +1,10 @@
 {
   "functions": {
-    "relay_brain": "functions/relay_brain"
+    "source": "functions",
+    "targets": [
+      "relay_core"
+    ],
+    "ignore": []
   },
   "client": {
     "source": "client"

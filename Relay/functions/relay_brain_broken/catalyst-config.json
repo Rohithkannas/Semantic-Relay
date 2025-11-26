@@ -1,6 +1,6 @@
 {
   "name": "relay_brain",
   "type": "advancedio",
-  "stack": "node18",
+  "stack": "node14",
   "execution": "index.js"
 }
