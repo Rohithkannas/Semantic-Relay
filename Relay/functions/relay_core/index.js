@@ -1,70 +1,112 @@
 'use strict';
 const express = require('express');
+const catalyst = require('zcatalyst-sdk-node');
 const app = express();
 
-// 1. UNIVERSAL PARSING (Prevents "Unexpected Token" crashes)
-// Order matters: Try JSON, then URL-encoded, then Raw Text.
+// 1. UNIVERSAL PARSING (Prevents Bot Crashes)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.text()); 
 
-// 2. ERROR HANDLER (Catches JSON parse errors silently)
-app.use((err, req, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        console.error('Bad JSON received:', err.message);
-        // Don't crash! Just pretend body is empty.
-        req.body = {}; 
-        return next();
-    }
-    next();
-});
+// 2. HEALTH CHECK
+app.get('/', (req, res) => res.send("Relay Core: DATABASE MODE"));
 
-// Health Check
-app.get('/', (req, res) => res.send("Relay Core is ONLINE!"));
-
-// List Rules (Mock)
-app.get('/rules/list', (req, res) => {
-    res.json({
-        rules: [
-            { ROWID: "1", keyword: "Billing", delegate_id: "Jane (Sales)", is_active: true },
-            { ROWID: "2", keyword: "Server", delegate_id: "Steve (DevOps)", is_active: true },
-            { ROWID: "3", keyword: "Help", delegate_id: "Admin", is_active: true }
-        ],
-        global_status: true
-    });
-});
-
-// Add/Delete (Mock)
-app.post('/rules/add', (req, res) => res.json({ success: true }));
-app.delete('/rules/:id', (req, res) => res.json({ success: true }));
-
-// 5. BOT HANDLER (Robust)
-app.post('/bot-handler', (req, res) => {
+// 3. LIST RULES (REAL DB)
+app.get('/rules/list', async (req, res) => {
     try {
+        const app = catalyst.initialize(req);
+        const table = app.datastore().table('HandoverRules');
+        
+        // Fetch rows directly from Cloud
+        const rows = await table.getAllRows();
+        
+        // Map to clean format
+        const rules = rows.map(row => ({
+            ROWID: row.ROWID,
+            keyword: row.keyword,
+            delegate_id: row.delegate_id,
+            is_active: row.is_active
+        }));
+
+        res.json({ rules: rules, global_status: true });
+    } catch (err) {
+        console.error("List Error:", err);
+        // Return empty list on error so Widget doesn't crash
+        res.json({ rules: [], global_status: false, error: "DB Error: " + err.message });
+    }
+});
+
+// 4. ADD RULE (REAL DB)
+app.post('/rules/add', async (req, res) => {
+    try {
+        const app = catalyst.initialize(req);
+        const table = app.datastore().table('HandoverRules');
+        
+        await table.insertRow({
+            keyword: req.body.keyword,
+            delegate_id: req.body.delegate_id,
+            is_active: true,
+            user_id: "current_user" // Hardcoded for hackathon simplicity
+        });
+        
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. DELETE RULE (REAL DB)
+app.delete('/rules/:id', async (req, res) => {
+    try {
+        const app = catalyst.initialize(req);
+        const table = app.datastore().table('HandoverRules');
+        
+        await table.deleteRow(req.params.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 6. BOT HANDLER (REAL LOGIC)
+app.post('/bot-handler', async (req, res) => {
+    try {
+        // Parse Text Safely
         let text = "";
         const body = req.body;
-
-        // Smart Extraction: Find the text no matter how it was sent
-        if (typeof body === 'object' && body.text) {
-            text = body.text;
-        } else if (typeof body === 'object' && body.message) {
-            text = typeof body.message === 'string' ? body.message : body.message.text;
-        } else if (typeof body === 'string') {
-            text = body; // It came as raw text
-        }
-
-        console.log("Processing Text:", text);
+        if (typeof body === 'object' && body.text) text = body.text;
+        else if (typeof body === 'string') text = body;
+        
         const cleanText = (text || "").toLowerCase();
+        
+        // Fetch Rules from DB
+        const app = catalyst.initialize(req);
+        const table = app.datastore().table('HandoverRules');
+        const allRows = await table.getAllRows();
 
-        if (cleanText.includes("server")) {
-            res.json({ text: "⚠️ **Relay Active:** User is OOO. Routing 'Server' issue to Steve." });
+        // Find Match
+        const match = allRows.find(row => cleanText.includes(row.keyword.toLowerCase()));
+
+        if (match) {
+            // Log to RelayLogs Table
+            try {
+                const logTable = app.datastore().table('RelayLogs');
+                await logTable.insertRow({
+                    original_sender: "User",
+                    routed_to: match.delegate_id,
+                    message_content: cleanText,
+                    logged_at: new Date().toISOString()
+                });
+            } catch (e) { console.log("Logging failed"); }
+
+            res.json({ text: `⚠️ **Relay Active:** User is OOO. Routing **'${match.keyword}'** issue to **${match.delegate_id}**.` });
         } else {
-            res.json({ text: "I heard: '" + cleanText + "'. Try typing 'The Server is down'." });
+            res.json({ text: `I heard '${cleanText}'. No handover rules matched.` });
         }
 
     } catch (e) {
-        console.error("Bot Logic Error:", e);
-        res.json({ text: "Error processing request." });
+        console.error(e);
+        res.json({ text: "Error: " + e.message });
     }
 });
 
