@@ -1,15 +1,92 @@
-// Use relative path so it works on Localhost AND Cloud automatically
+// API Configuration
 const API_BASE_URL = '/server/relay_core';
 
-// DOM Elements
+// View Management
+const loginView = document.getElementById('login-view');
+const dashboardView = document.getElementById('dashboard-view');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = document.querySelector('.theme-icon');
+
+// Dashboard Elements
 const statusToggle = document.getElementById('status-toggle');
 const statusText = document.getElementById('status-text');
 const rulesContainer = document.getElementById('rules-container');
 const addRuleBtn = document.getElementById('add-rule-btn');
+const keywordInput = document.getElementById('keyword-input');
+const delegateSelect = document.getElementById('delegate-select');
 
-// 1. Fetch Data on Load
-window.addEventListener('load', fetchData);
+// Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
 
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    if (themeIcon) {
+        themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
+    }
+}
+
+// Authentication
+function checkAuth() {
+    // Always require login - no auto-login
+    return false;
+}
+
+function showLogin() {
+    loginView.classList.add('active');
+    dashboardView.classList.remove('active');
+}
+
+function showDashboard() {
+    loginView.classList.remove('active');
+    dashboardView.classList.add('active');
+    fetchData();
+}
+
+// Login Handler
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    // Simple authentication check
+    if (email === 'kidroh10@gmail.com' && password === 'blackandwhite@10') {
+        // Store token and switch to dashboard
+        localStorage.setItem('relay_token', 'authenticated');
+        loginError.style.display = 'none';
+        showDashboard();
+    } else {
+        // Show error message
+        loginError.style.display = 'block';
+        // Shake animation for error feedback
+        loginForm.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            loginForm.style.animation = '';
+        }, 500);
+    }
+});
+
+// Logout functionality (optional - can be triggered by token expiry)
+function logout() {
+    localStorage.removeItem('relay_token');
+    showLogin();
+}
+
+// Fetch Data from API
 async function fetchData() {
     try {
         console.log("Fetching rules from:", API_BASE_URL + '/rules/list');
@@ -37,59 +114,175 @@ async function fetchData() {
     }
 }
 
-// 2. Render Rules List
+// Render Rules List
 function renderRules(rules) {
     rulesContainer.innerHTML = '';
     if (rules.length === 0) {
-        rulesContainer.innerHTML = '<p style="padding:20px; text-align:center; color:#666;">No rules set yet. Add one below!</p>';
+        rulesContainer.innerHTML = '<div class="no-rules">No rules set yet. Add one below!</div>';
         return;
     }
 
     rules.forEach(rule => {
         const card = document.createElement('div');
-        card.className = 'rule-card'; // Ensure you have CSS for this
-        card.style = "background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;";
+        card.className = 'rule-card';
         
         card.innerHTML = `
-            <div>
-                <strong style="color:#2C7BE5; font-size: 16px;">${rule.keyword}</strong>
-                <div style="color:#666; font-size: 14px;">Delegate: ${rule.delegate_id}</div>
+            <div class="rule-content">
+                <div class="rule-keyword">${rule.keyword}</div>
+                <div class="rule-delegate">Delegate: ${rule.delegate_id}</div>
             </div>
-            <button onclick="deleteRule('${rule.ROWID}')" style="background:none; border:none; color:red; cursor:pointer;">🗑️</button>
+            <div class="rule-actions">
+                <button class="delete-btn" onclick="deleteRule('${rule.ROWID}')">Delete</button>
+            </div>
         `;
         rulesContainer.appendChild(card);
     });
 }
 
-// 3. Add Rule
+// Add Rule
 addRuleBtn.addEventListener('click', async () => {
-    const keyword = document.getElementById('keyword-input').value;
-    const delegate = document.getElementById('delegate-select').value;
+    const keyword = keywordInput.value.trim();
+    const delegate = delegateSelect.value;
 
-    if (!keyword) return alert("Please enter a keyword");
+    if (!keyword) {
+        keywordInput.focus();
+        keywordInput.style.animation = 'pulse 0.5s';
+        setTimeout(() => {
+            keywordInput.style.animation = '';
+        }, 500);
+        return;
+    }
 
+    const originalText = addRuleBtn.innerText;
     addRuleBtn.innerText = "Saving...";
+    addRuleBtn.disabled = true;
     
     try {
-        await fetch(`${API_BASE_URL}/rules/add`, {
+        const response = await fetch(`${API_BASE_URL}/rules/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ keyword, delegate_id: delegate })
         });
         
+        if (!response.ok) {
+            throw new Error(`Failed to add rule: ${response.status}`);
+        }
+        
         // Clear input and reload
-        document.getElementById('keyword-input').value = '';
+        keywordInput.value = '';
         fetchData(); 
-    } catch (e) {
-        alert("Failed to save rule");
+        
+    } catch (error) {
+        console.error("Error adding rule:", error);
+        alert("Failed to save rule. Please try again.");
     } finally {
-        addRuleBtn.innerText = "+ Add Rule";
+        addRuleBtn.innerText = originalText;
+        addRuleBtn.disabled = false;
     }
 });
 
-// 4. Delete Rule Function (Needs to be global)
+// Delete Rule Function (global for onclick)
 window.deleteRule = async (id) => {
     if(!confirm("Delete this rule?")) return;
-    await fetch(`${API_BASE_URL}/rules/${id}`, { method: 'DELETE' });
-    fetchData();
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/rules/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+            throw new Error(`Failed to delete rule: ${response.status}`);
+        }
+        fetchData();
+    } catch (error) {
+        console.error("Error deleting rule:", error);
+        alert("Failed to delete rule. Please try again.");
+    }
 };
+
+// Status Toggle Handler
+statusToggle.addEventListener('change', async () => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ active: statusToggle.checked })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to update status: ${response.status}`);
+        }
+        
+        fetchData(); // Refresh data to show updated status
+    } catch (error) {
+        console.error("Error updating status:", error);
+        // Revert toggle on error
+        statusToggle.checked = !statusToggle.checked;
+        alert("Failed to update status. Please try again.");
+    }
+});
+
+// Theme Toggle Handler
+if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + L to logout
+    if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        logout();
+    }
+    
+    // Ctrl/Cmd + T to toggle theme
+    if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+        e.preventDefault();
+        toggleTheme();
+    }
+    
+    // Enter to submit rule when keyword input is focused
+    if (e.key === 'Enter' && document.activeElement === keywordInput) {
+        e.preventDefault();
+        addRuleBtn.click();
+    }
+});
+
+// Add CSS animations dynamically
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .no-rules {
+        padding: 40px;
+        text-align: center;
+        color: var(--text-muted);
+        font-style: italic;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px dashed var(--border-color);
+    }
+`;
+document.head.appendChild(style);
+
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize theme
+    initTheme();
+    
+    // Always show login page - no auto-login
+    showLogin();
+    
+    // Focus on password field since email is pre-filled
+    setTimeout(() => {
+        document.getElementById('password').focus();
+    }, 100);
+});
+
+// Remove token expiry check since we're not using persistent login

@@ -1,49 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relay Control</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #F7F9FC; margin: 0; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .status-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .rule-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 10px; display: flex; justify-content: space-between; }
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #2C3E50; padding: 15px; display: flex; gap: 10px; }
-        input, select { padding: 10px; border-radius: 5px; border: none; flex-grow: 1; }
-        button { background: #2C7BE5; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        h1 { color: #2C3E50; margin: 0; font-size: 18px; }
-        h4 { color: #2C3E50; margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div class="header">
-        <h1>Relay Control</h1>
-        <label class="switch">
-            <input type="checkbox" id="status-toggle">
-            <span class="slider round"></span>
-        </label>
-    </div>
-
-    <div class="status-card" id="status-text">
-        Loading status...
-    </div>
-
-    <h4>Routing Rules</h4>
-    <div id="rules-container">
+    <!-- Login View -->
+    <div id="login-view" class="view active">
+        <div class="login-container">
+            <div class="login-card">
+                <h1>Relay Control</h1>
+                <p class="login-subtitle">Enter your credentials to access the dashboard</p>
+                
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" value="kidroh10@gmail.com" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                        <div class="password-hint">Password: blackandwhite@10</div>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                
+                <div id="login-error" class="error-message" style="display: none;">
+                    Invalid credentials. Please try again.
+                </div>
+            </div>
         </div>
+    </div>
 
-    <div class="footer">
-        <input type="text" id="keyword-input" placeholder="Keyword (e.g., Billing)">
-        
-        <select id="delegate-select">
-            <option value="Steve (DevOps)">Steve (DevOps)</option>
-            <option value="Jane (Sales)">Jane (Sales)</option>
-            <option value="Admin">Admin</option>
-        </select>
-        
-        <button id="add-rule-btn">+ Add Rule</button>
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view">
+        <div class="dashboard-container">
+            <header class="dashboard-header">
+                <h1>Relay Control</h1>
+                <div class="header-controls">
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <div class="toggle-container">
+                        <span class="toggle-label">Relay Active</span>
+                        <label class="switch">
+                            <input type="checkbox" id="status-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </header>
+
+            <main class="dashboard-main">
+                <div class="status-section">
+                    <div class="status-card" id="status-text">
+                        Loading status...
+                    </div>
+                </div>
+
+                <div class="rules-section">
+                    <h2>Routing Rules</h2>
+                    <div id="rules-container"></div>
+                </div>
+            </main>
+
+            <footer class="dashboard-footer">
+                <div class="add-rule-form">
+                    <input type="text" id="keyword-input" placeholder="Keyword (e.g., Billing)" class="form-input">
+                    
+                    <select id="delegate-select" class="form-select">
+                        <option value="Steve (DevOps)">Steve (DevOps)</option>
+                        <option value="Jane (Sales)">Jane (Sales)</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                    
+                    <button id="add-rule-btn" class="add-btn">+ Add Rule</button>
+                </div>
+            </footer>
+        </div>
     </div>
 
     <script src="script.js"></script>
