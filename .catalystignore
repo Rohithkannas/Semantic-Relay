@@ -1,0 +1,14 @@
+# --- Crucial Folders to Ignore for Deployment ---
+
+# Ignore ALL node_modules folders, which contain thousands of files
+node_modules/
+
+# Ignore old/broken function directories that are not needed for deployment
+functions/OLD_brain/
+functions/relay_brain_broken/
+
+# Ignore project metadata and common development artifacts
+.git/
+.DS_Store
+*.zip
+*.log

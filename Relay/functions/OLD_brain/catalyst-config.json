@@ -1,6 +1,0 @@
-{
-  "name": "relay_core",
-  "type": "advancedio",
-  "stack": "node18",
-  "execution": "index.js"
-}
