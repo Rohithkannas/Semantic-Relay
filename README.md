@@ -17,7 +17,7 @@ Relay operates as a seamless extension within Zoho Cliq, combining two powerful 
 
 All routing rules, logs, and configurations are persistent via Zoho Catalyst Data Store, ensuring continuity across sessions and providing comprehensive audit trails for post-vacation review.
 
-## Detailed Use Case (The Winning Scenario)
+## Detailed Use Case
 
 ### Scenario
 A Project Manager (PM) is leaving for vacation and needs to ensure critical server-related issues are handled promptly.
